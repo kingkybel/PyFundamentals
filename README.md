@@ -1,0 +1,119 @@
+# PyFundamentals
+
+A collection of fundamental Python utilities for common tasks such as string manipulation, date/time formatting, extended enumerations, threading with return values, bash-like operations, and exception handling.
+
+## Features
+
+- **Basic Functions**: Utility functions for checking empty strings and generating formatted date/time strings.
+- **String Utilities**: Comprehensive string manipulation including case conversion (CamelCase, snake_case), regex matching, Roman numeral conversion, random string generation, and text normalization.
+- **Extended Enums**: Enhanced Enum and Flag classes with additional methods like `list` and `from_string` for more flexible enumeration handling.
+- **Overrides**: Decorator-based method override checking for better code reliability in class hierarchies.
+- **Threading**: `ReturningThread` class that extends Python's Thread to allow capturing return values from threaded functions.
+- **Bash Utilities**: Functions to interact with system information like user details, hostname, IP addresses, and tool availability checks.
+- **Exceptions**: Custom exception classes for handling errors in the library.
+
+## Installation
+
+Install from PyPI:
+
+```bash
+pip install PyFundamentals
+```
+
+Or clone the repository and install locally:
+
+```bash
+git clone https://github.com/PyFundamentals.git
+cd PyFundamentals
+pip install .
+```
+
+## Usage
+
+### Basic Functions
+
+```python
+from fundamentals.basic_functions import is_empty_string, now_string
+
+if not is_empty_string(some_value):
+    timestamp = now_string()  # e.g., "20241027-16:22:33.123456"
+```
+
+### String Utilities
+
+```python
+from fundamentals.string_utils import make_cpp_id, identifier_case
+
+cpp_id = make_cpp_id("some mixed case", IdentifierStringCase.SNAKE)  # "some_mixed_case"
+```
+
+### Extended Enums
+
+```python
+from fundamentals.extended_enum import ExtendedEnum
+
+class Color(ExtendedEnum):
+    RED = auto()
+    GREEN = auto()
+    BLUE = auto()
+
+# List all values
+colors = Color.list()  # [<Color.RED: 1>, <Color.GREEN: 2>, <Color.BLUE: 3>]
+
+# Parse from string (case-insensitive)
+color = Color.from_string("green")  # Color.GREEN
+```
+
+### Returning Thread
+
+```python
+from fundamentals.thread_with_return import ReturningThread
+
+def worker(x, y):
+    return x + y
+
+thread = ReturningThread(target=worker, args=(5, 10))
+thread.start()
+result = thread.join()  # Returns 15
+```
+
+### Exceptions
+
+```python
+from fundamentals.exceptions import StringUtilError
+
+raise StringUtilError("An error occurred during string processing")
+```
+
+## Testing
+
+Run the test suite:
+
+```bash
+python -m unittest discover test/
+```
+
+For coverage (requires `coverage.py`):
+
+```bash
+coverage run --source=fundamentals -m unittest discover test/
+coverage report
+```
+
+## Contributing
+
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch
+3. Add tests for new functionality
+4. Ensure all tests pass and code is linted
+5. Submit a pull request
+
+## License
+
+This project is licensed under the GNU General Public License version 2 (GPLv2). See the `LICENSE` file for details.
+
+## Author
+
+Dieter J Kybelksties

@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "PyFundamentals"
+version = "0.1.0"
+description = "A collection of fundamental Python utilities for common tasks"
+readme = "README.md"
+license = {text = "GPL-2.0"}
+authors = [
+    {name = "Dieter J Kybelksties", email = "github@kybelksties.com"}
+]
+keywords = ["python", "utilities", "fundamentals", "enums", "string-manipulation", "threading"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = []
+
+[tool.setuptools]
+packages = ["fundamentals"]
+zip-safe = false
+
+[tool.setuptools.package-data]
+fundamentals = ["*.py"]
