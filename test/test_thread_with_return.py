@@ -27,19 +27,19 @@ import unittest
 from fundamentals.thread_with_return import ReturningThread
 
 
-def test_func(x, y=10):
+def func_to_test(x, y=10):
     return x + y
 
 
 class ThreadWithReturnTests(unittest.TestCase):
 
     def test_returning_thread(self):
-        t = ReturningThread(target=test_func, args=(5,))
+        t = ReturningThread(target=func_to_test, args=(5,))
         t.start()
         result = t.join()
         self.assertEqual(result, 15)
 
-        t = ReturningThread(target=test_func, args=(3,), kwargs={'y': 7})
+        t = ReturningThread(target=func_to_test, args=(3,), kwargs={'y': 7})
         t.start()
         result = t.join()
         self.assertEqual(result, 10)
