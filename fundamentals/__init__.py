@@ -6,4 +6,4 @@ from .extended_enum import *
 from .overrides import *
 from .thread_with_return import *
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
