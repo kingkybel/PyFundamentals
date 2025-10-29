@@ -1,3 +1,26 @@
+Metadata-Version: 2.4
+Name: kingkybel-pyfundamentals
+Version: 0.1.1
+Summary: A collection of fundamental Python utilities for common tasks
+Author-email: Dieter J Kybelksties <github@kybelksties.com>
+License: GPL-2.0
+Project-URL: Homepage, https://github.com/kingkybel/PyFundamentals
+Keywords: python,utilities,fundamentals,enums,string-manipulation,threading
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: GNU General Public License v2 (GPLv2)
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Dynamic: license-file
+
 # PyFundamentals
 
 A collection of fundamental Python utilities for common tasks such as string manipulation, date/time formatting, extended enumerations, threading with return values, bash-like operations, and exception handling.

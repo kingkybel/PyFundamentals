@@ -2,9 +2,12 @@
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[metadata]
+name = "kingkybel-pyfundamentals"
+
 [project]
-name = "PyFundamentals"
-version = "0.1.0"
+name = "kingkybel-pyfundamentals"
+version = "0.1.1"
 description = "A collection of fundamental Python utilities for common tasks"
 readme = "README.md"
 license = {text = "GPL-2.0"}
@@ -18,15 +21,18 @@ classifiers = [
     "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
 dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/kingkybel/PyFundamentals"
 
 [tool.setuptools]
 packages = ["fundamentals"]
