@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="400" viewBox="0 0 1600 400" role="img" aria-label="PyFundamentals banner">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#0f766e"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="400" fill="url(#bg)"/>
+  <circle cx="250" cy="330" r="190" fill="#99f6e4" fill-opacity="0.11"/>
+  <circle cx="1440" cy="70" r="170" fill="#ccfbf1" fill-opacity="0.15"/>
+  <g transform="translate(1238 102)">
+    <rect x="12" y="16" width="280" height="172" rx="20" fill="#f0fdfa" fill-opacity="0.2" stroke="#f0fdfa" stroke-opacity="0.6" stroke-width="4"/>
+    <rect x="32" y="42" width="94" height="34" rx="8" fill="#f0fdfa" fill-opacity="0.78"/>
+    <rect x="138" y="42" width="134" height="34" rx="8" fill="#f0fdfa" fill-opacity="0.62"/>
+    <rect x="32" y="90" width="240" height="14" rx="7" fill="#f0fdfa" fill-opacity="0.72"/>
+    <rect x="32" y="114" width="196" height="14" rx="7" fill="#f0fdfa" fill-opacity="0.58"/>
+    <rect x="32" y="138" width="162" height="14" rx="7" fill="#f0fdfa" fill-opacity="0.48"/>
+    <circle cx="232" cy="258" r="52" fill="#f0fdfa" fill-opacity="0.2" stroke="#f0fdfa" stroke-opacity="0.68" stroke-width="4"/>
+    <path d="M232 224 L232 258 L254 270" fill="none" stroke="#f0fdfa" stroke-opacity="0.82" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="90" y="210" font-family="Segoe UI, Arial, sans-serif" font-size="76" font-weight="700" fill="#f0fdfa">PyFundamentals</text>
+  <text x="92" y="268" font-family="Segoe UI, Arial, sans-serif" font-size="30" fill="#ccfbf1">Essential Python utilities for strings, enums, threading, shell helpers, and more.</text>
+</svg>

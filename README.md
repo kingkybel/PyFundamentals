@@ -1,5 +1,7 @@
 # PyFundamentals
 
+![PyFundamentals banner](assets/banners/pyfundamentals-banner.svg)
+
 A collection of fundamental Python utilities for common tasks such as string manipulation, date/time formatting, extended enumerations, threading with return values, bash-like operations, and exception handling.
 
 ## Features
@@ -114,6 +116,3 @@ Contributions are welcome! Please follow these steps:
 
 This project is licensed under the GNU General Public License version 2 (GPLv2). See the `LICENSE` file for details.
 
-## Author
-
-Dieter J Kybelksties
