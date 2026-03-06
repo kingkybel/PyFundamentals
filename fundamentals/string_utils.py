@@ -30,13 +30,9 @@ import re
 import string
 from enum import auto
 
-from colorama import init as colorama_init
-
 from fundamentals.basic_functions import is_empty_string
 from fundamentals.exceptions import StringUtilError
 from fundamentals.extended_enum import ExtendedFlag
-
-colorama_init()
 
 
 class Encodings:
@@ -273,25 +269,6 @@ def is_cpp_id(identifier: str) -> bool:
     # If all checks pass, it's a valid C++ identifier
     return True
 
-
-# def make_cpp_id(input_string: str) -> str:
-#     """
-#     Replaces every character in a string that is not alphanumeric or an underscore with an underscore.
-#     Ensures multiple consecutive underscores are replaced with a single underscore.
-#
-#     :param input_string: The input string to process.
-#     :return: A processed string with only alphanumeric characters and underscores.
-#     """
-#     # Replace all non-alphanumeric and non-underscore characters with underscores
-#     processed_string = re.sub(r'[^\w]', '_', input_string)
-#     # Replace multiple consecutive underscores with a single underscore
-#     processed_string = re.sub(r'__+', '_', processed_string)
-#     processed_string = processed_string.strip('_')
-#     if is_empty_string(processed_string):
-#         processed_string = "_"
-#     return processed_string
-#
-#
 def identify_case(input_str: str) -> IdentifierStringCase:
     """
     Identifies the case of a string based on IdentifierStringCase.

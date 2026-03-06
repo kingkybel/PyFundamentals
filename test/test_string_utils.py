@@ -23,13 +23,66 @@
 # @author: Dieter J Kybelksties
 
 import unittest
+from unittest.mock import patch
 
 from fundamentals.string_utils import squeeze_chars, matches_any, normalise_sentence, roman_to_integer, is_roman_numeral, \
     identify_case, IdentifierStringCase, make_cpp_id, remove_control_chars, replace_all, get_random_string, is_cpp_id, \
-    snake_to_camel, camel_to_snake, split_text_into_chunks, is_utf8_ascii
+    snake_to_camel, camel_to_snake, split_text_into_chunks, is_utf8_ascii, StringUtilError, input_value, contains_at_least_n_of
 
 
 class BasicFunctionsTests(unittest.TestCase):
+
+    def test_squeeze_chars_error(self):
+        with self.assertRaises(StringUtilError):
+            squeeze_chars("abc", "a", replace_with="XX")
+
+    def test_input_value(self):
+        with patch('fundamentals.string_utils.__get_user_input', return_value="test"):
+            pass
+
+    def test_contains_at_least_n_of(self):
+        self.assertFalse(contains_at_least_n_of("text", None))
+        self.assertTrue(contains_at_least_n_of("text", ["word"], minimum=0))
+        self.assertTrue(contains_at_least_n_of("hello world", ["hello", "world"], minimum=2))
+        self.assertFalse(contains_at_least_n_of("hello world", ["hello", "universe"], minimum=2))
+
+    def test_split_text_into_chunks(self):
+        text = "Sentence one. Sentence two? Sentence three."
+        chunks = split_text_into_chunks(text, 15)
+        self.assertTrue(len(chunks) >= 3)
+
+    def test_input_value_mocked(self):
+        with patch('fundamentals.string_utils.__get_user_input') as mock_input:
+             # Test str
+             mock_input.return_value = "hello"
+             self.assertEqual(input_value("var", "help"), "hello")
+             
+             # Test int
+             mock_input.return_value = "123"
+             self.assertEqual(input_value("var", "help", var_type=int), 123)
+             
+             # Test bool
+             mock_input.return_value = "true"
+             self.assertTrue(input_value("var", "help", var_type=bool))
+             
+             # Test regex failure then success
+             mock_input.side_effect = ["abc", "123"]
+             with patch('builtins.print'):
+                 self.assertEqual(input_value("var", "help", regex_str=r"\d+"), "123")
+                 
+             # Test range constraint failure then success
+             mock_input.side_effect = ["20", "15"]
+             with patch('builtins.print'):
+                 self.assertEqual(input_value("var", "help", var_type=int, constraint=range(10, 20)), 15)
+
+             # Test list constraint failure then success
+             mock_input.side_effect = ["c", "a"]
+             with patch('builtins.print'):
+                 self.assertEqual(input_value("var", "help", constraint=["a", "b"]), "a")
+
+    def test_input_value_value_error(self):
+        with self.assertRaises(ValueError):
+            input_value("var", "help", regex_str=".*", constraint=["a"])
 
     def test_squeeze_chars(self):
         self.assertEqual("", squeeze_chars(source="", squeeze_set="\n\t\r ", replace_with=" "))

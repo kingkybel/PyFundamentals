@@ -51,7 +51,7 @@ def match_one_alternative(
         partial: str,
         alternatives: str | list[str],
         delimiter: str = "|",
-        predicate: Callable[[object], bool] = lambda x: True,
+        predicate: Callable[[str], bool] = lambda x: True,
         flags: re.RegexFlag = re.IGNORECASE,
         consecutive_only: bool = False,
 ) -> tuple[str | None, int, list[str]]:

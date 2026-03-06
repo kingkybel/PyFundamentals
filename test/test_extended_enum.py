@@ -26,10 +26,65 @@ import unittest
 from enum import auto
 
 from fundamentals.exceptions import ExtendedEnumError
-from fundamentals.extended_enum import ExtendedEnum, EnumListType, ExtendedFlag
+from fundamentals.extended_enum import ExtendedEnum, EnumListType, ExtendedFlag, match_one_alternative, always_match
 
 
 class ExtendedEnumTests(unittest.TestCase):
+
+    def test_always_match(self):
+        self.assertTrue(always_match(None))
+        self.assertTrue(always_match(1))
+        self.assertTrue(always_match("test"))
+
+    def test_match_one_alternative_basic(self):
+        # Test basic matching
+        matched, reval, matches = match_one_alternative("abc", ["abc", "def", "ghi"])
+        self.assertEqual(matched, "abc")
+        self.assertEqual(reval, 0)
+        self.assertEqual(matches, ["abc"])
+
+        # Test no match
+        matched, reval, matches = match_one_alternative("xyz", ["abc", "def", "ghi"])
+        self.assertIsNone(matched)
+        self.assertEqual(reval, -1)
+        self.assertEqual(matches, [])
+
+        # Test multiple matches
+        matched, reval, matches = match_one_alternative("a", ["abc", "ade", "ghi"])
+        self.assertIsNone(matched)
+        self.assertEqual(reval, -1)
+        self.assertEqual(matches, ["abc", "ade"])
+
+    def test_match_one_alternative_consecutive(self):
+        # Order suffices by default
+        matched, reval, matches = match_one_alternative("ac", ["abc", "def"])
+        self.assertEqual(matched, "abc")
+
+        # Consecutive only
+        matched, reval, matches = match_one_alternative("ac", ["abc", "def"], consecutive_only=True)
+        self.assertIsNone(matched)
+        self.assertEqual(reval, -1)
+
+        matched, reval, matches = match_one_alternative("ab", ["abc", "def"], consecutive_only=True)
+        self.assertEqual(matched, "abc")
+
+    def test_match_one_alternative_delimiter(self):
+        matched, reval, matches = match_one_alternative("abc", "abc|def|ghi", delimiter="|")
+        self.assertEqual(matched, "abc")
+
+    def test_match_one_alternative_predicate(self):
+        def length_predicate(s) -> bool:
+            return len(s) > 3
+
+        matched, reval, matches = match_one_alternative("a", ["abc", "abcd"], predicate=length_predicate)
+        self.assertEqual(matched, "abcd")
+
+    def test_match_one_alternative_errors(self):
+        with self.assertRaises(ValueError):
+            match_one_alternative("", ["abc"])
+
+        with self.assertRaises(ValueError):
+            match_one_alternative("a", ["abc", ""])
 
     def test_create_enum(self):
         class SimpleEnum(ExtendedEnum):
@@ -164,6 +219,33 @@ class ExtendedEnumTests(unittest.TestCase):
 
         with self.assertRaises(ExtendedEnumError):
             SimpleFlag.from_string("SIM")
+
+    def test_enum_or(self):
+        class SimpleEnum(ExtendedEnum):
+            S1 = 1
+            S2 = 2
+            S3 = 3
+
+        result = SimpleEnum.S1 | SimpleEnum.S2
+        self.assertEqual(result, SimpleEnum.S3)
+        self.assertIsInstance(result, SimpleEnum)
+
+        # Test NotImplemented
+        self.assertEqual(SimpleEnum.S1.__or__(5), NotImplemented)
+        self.assertEqual(SimpleEnum.S1.__ror__(5), NotImplemented)
+
+    def test_flag_or(self):
+        class SimpleFlag(ExtendedFlag):
+            F1 = 1
+            F2 = 2
+
+        result = SimpleFlag.F1 | SimpleFlag.F2
+        self.assertEqual(result.value, 3)
+        self.assertIsInstance(result, SimpleFlag)
+
+        # Test NotImplemented
+        self.assertEqual(SimpleFlag.F1.__or__(5), NotImplemented)
+        self.assertEqual(SimpleFlag.F1.__ror__(5), NotImplemented)
 
 
 if __name__ == '__main__':

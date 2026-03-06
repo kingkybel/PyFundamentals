@@ -75,10 +75,8 @@ class TestOverrideChecker(unittest.TestCase):
                     pass
 
             impl = Implementation()
-        # The RuntimeError wraps the AssertionError, so check for the wrapped message
-
-        err = str(cm.exception)
-        self.assertIn("No interface class found for method method", err)
+        # Check the expected message
+        self.assertIn("No interface class found for method method", str(cm.exception))
 
     def test_set_name_missing_parameter(self):
         with self.assertRaises(AssertionError) as cm:
@@ -105,7 +103,7 @@ class TestOverrideChecker(unittest.TestCase):
                     pass
 
             impl = Implementation()
-        # The RuntimeError wraps the AssertionError, so check for the wrapped message
+        # Check the expected message
         self.assertIn("Method method missing parameter args", str(cm.exception))
 
     def test_set_name_var_keyword_missing(self):
@@ -120,7 +118,7 @@ class TestOverrideChecker(unittest.TestCase):
                     pass
 
             impl = Implementation()
-        # The RuntimeError wraps the AssertionError, so check for the wrapped message
+        # Check the expected message
         self.assertIn("Method method must have **kwargs since interface does", str(cm.exception))
 
     def test_get_instance_method(self):

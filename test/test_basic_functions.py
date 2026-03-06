@@ -23,7 +23,6 @@
 # @author: Dieter J Kybelksties
 
 import unittest
-import re
 
 from fundamentals.basic_functions import is_empty_string, now_string, now_string_short, now_date, now_year
 

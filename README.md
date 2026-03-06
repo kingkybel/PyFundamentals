@@ -35,8 +35,9 @@ pip install .
 ### Basic Functions
 
 ```python
-from fundamentals.basic_functions import is_empty_string, now_string
+from fundamentals import is_empty_string, now_string
 
+some_value = "test"
 if not is_empty_string(some_value):
     timestamp = now_string()  # e.g., "20241027-16:22:33.123456"
 ```
@@ -44,7 +45,7 @@ if not is_empty_string(some_value):
 ### String Utilities
 
 ```python
-from fundamentals.string_utils import make_cpp_id, identifier_case
+from fundamentals import make_cpp_id, IdentifierStringCase
 
 cpp_id = make_cpp_id("some mixed case", IdentifierStringCase.SNAKE)  # "some_mixed_case"
 ```
@@ -52,7 +53,8 @@ cpp_id = make_cpp_id("some mixed case", IdentifierStringCase.SNAKE)  # "some_mix
 ### Extended Enums
 
 ```python
-from fundamentals.extended_enum import ExtendedEnum
+from enum import auto
+from fundamentals import ExtendedEnum
 
 class Color(ExtendedEnum):
     RED = auto()
@@ -69,7 +71,7 @@ color = Color.from_string("green")  # Color.GREEN
 ### Returning Thread
 
 ```python
-from fundamentals.thread_with_return import ReturningThread
+from fundamentals import ReturningThread
 
 def worker(x, y):
     return x + y
@@ -82,7 +84,7 @@ result = thread.join()  # Returns 15
 ### Exceptions
 
 ```python
-from fundamentals.exceptions import StringUtilError
+from fundamentals import StringUtilError
 
 raise StringUtilError("An error occurred during string processing")
 ```
