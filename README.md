@@ -39,7 +39,7 @@ from fundamentals import is_empty_string, now_string
 
 some_value = "test"
 if not is_empty_string(some_value):
-    timestamp = now_string()  # e.g., "20241027-16:22:33.123456"
+    timestamp = now_string()  # e.g., "20260309-11:46:00.123456"
 ```
 
 ### String Utilities

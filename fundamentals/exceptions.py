@@ -18,7 +18,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #
-# @date: 2024-07-13
+# @date: 2026-03-09
 # @author: Dieter J Kybelksties
 
 from __future__ import annotations

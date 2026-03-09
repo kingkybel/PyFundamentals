@@ -18,7 +18,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #
-# @date: 2024-07-13
+# @date: 2026-03-09
 # @author: Dieter J Kybelksties
 
 from __future__ import annotations
@@ -130,16 +130,45 @@ def squeeze_chars(source: str, squeeze_set: str, replace_with: str = ' ') -> str
         return source
     if len(replace_with) != 1:
         raise StringUtilError(f"replace_with must be 1 char long but is '{replace_with}'")
-    # translate all occurrences of chars in squeeze_set to replacement char.
-    translater = source.maketrans(squeeze_set, replace_with * len(squeeze_set))
-    source = source.translate(translater)
-
-    # compress multiple consecutive occurrences of the replacement char to a single one.
-    compress_re = re.compile(f"{replace_with}+")
-    source = re.sub(compress_re, replace_with, source)
-
-    # remove replacement char from front ad back
-    return source.strip(replace_with)
+    
+    # Use character-by-character approach to handle both ASCII and Unicode properly
+    squeeze_set = set(squeeze_set)
+    squeeze_set_lower = set(c.lower() for c in squeeze_set)
+    result = []
+    prev_char_was_squeeze = False
+    
+    for char in source:
+        char_lower = char.lower()
+        is_squeeze_char = char in squeeze_set or char_lower in squeeze_set_lower
+        
+        if is_squeeze_char:
+            # Only add replace_with if previous char was NOT a squeeze char
+            # (to handle consecutive squeeze chars)
+            if not prev_char_was_squeeze:
+                result.append(replace_with)
+            prev_char_was_squeeze = True
+        else:
+            # Non-squeeze char: always add it
+            result.append(char)
+            prev_char_was_squeeze = False
+    
+    source = ''.join(result)
+    
+    # Compress consecutive replace_with chars
+    if replace_with:
+        compress_re = re.compile(f'{re.escape(replace_with)}+')
+        source = compress_re.sub(replace_with, source)
+    
+    # Strip the replace_with char from edges, but only if it's the exact space character
+    # (to avoid stripping all whitespace when replace_with is a non-whitespace char like emoji)
+    if replace_with == ' ':
+        # Only strip the exact space character, not all whitespace
+        if source and source[0] == ' ':
+            source = source[1:]
+        if source and source[-1] == ' ':
+            source = source[:-1]
+    
+    return source
 
 
 def remove_control_chars(text: str) -> str:
@@ -155,18 +184,19 @@ def remove_control_chars(text: str) -> str:
     return control_char_re.sub(' ', text)
 
 
-def matches_any(search_string: str, patterns: (str | list[str]) = None) -> bool:
+def matches_any(search_string: str, patterns: (str | list[str]) = None, flags: int = 0) -> bool:
     """
     Check whether the search-string matches any of the given patterns.
     :param search_string: the string to test.
     :param patterns: the list of patterns to match against.
+    :param flags: regex flags (e.g., re.IGNORECASE).
     :return: True if any pattern matches, False otherwise.
     """
     if patterns is None:
         return True
     if isinstance(patterns, str):
         patterns = [patterns]
-    if any(re.match(pattern=pattern, string=search_string) for pattern in patterns):
+    if any(re.match(pattern=pattern, string=search_string, flags=flags) for pattern in patterns):
         return True
     return False
 
@@ -193,18 +223,24 @@ def normalise_sentence(sentence: str,
     :param expected_non_al_nums: list of non-alpha-numeric chars that should not to be stripped.
     :return:
     """
-    sentence = squeeze_chars(source=sentence,
-                             squeeze_set=squeeze_set,
-                             replace_with=" ")
     if expected_non_al_nums is None:
         expected_non_al_nums = ['.', '!', '?', ',', ';',
                                 '"', "'", '/', '%',
                                 '(', ')',
                                 '{', '}',
                                 '[', ']']
+    
+    # Subtract expected_non_al_nums from squeeze_set so they're preserved
+    expected_set = set(expected_non_al_nums) if isinstance(expected_non_al_nums, list) else set(expected_non_al_nums)
+    actual_squeeze_chars_set = set(squeeze_set) - expected_set
+    actual_squeeze_set = ''.join(actual_squeeze_chars_set) if actual_squeeze_chars_set else squeeze_set
+    
+    sentence = squeeze_chars(source=sentence,
+                             squeeze_set=actual_squeeze_set,
+                             replace_with=" ")
     reval = ""
     for c in sentence:
-        if c in expected_non_al_nums:
+        if c in expected_set:
             reval += f" {c} "
         else:
             reval += c
@@ -230,22 +266,31 @@ def get_random_string(length: int, letters: str = None) -> str:
 def contains_at_least_n_of(text: str, specified_words: (str | list[str]) = None, minimum: int = 10) -> bool:
     """
     Check whether a text contains at least `minimum` of the specified words.
+    Supports both literal words and regex patterns in specified_words.
     :param text: the text to check.
-    :param specified_words: a list of words to look for.
+    :param specified_words: a list of words or regex patterns to look for.
     :param minimum: minimum number of words to be found.
-    :return: True if at least `minimum` words are in tex, False otherwise.
+    :return: True if at least `minimum` words are in text, False otherwise.
     """
     if specified_words is None:
         return False
     if minimum < 1:
         return True
-    word_count = sum(1 for word in specified_words if word in text)
+    
+    # Count occurrences of each word/pattern in the text
+    word_count = 0
+    for word in specified_words:
+        # Use regex findall to count all occurrences (supports regex patterns)
+        matches = re.findall(word, text)
+        word_count += len(matches)
+    
     return word_count >= minimum
 
 
 def is_cpp_id(identifier: str) -> bool:
     """
     Check whether a string is a CPP identifier or not.
+    Only ASCII characters (a-z, A-Z, 0-9, _) are allowed.
     :param identifier: the string to check.
     :return: True if the string is a CPP identifier, False otherwise.
     """
@@ -253,14 +298,20 @@ def is_cpp_id(identifier: str) -> bool:
     if not identifier:
         return False
 
-    # Check if the first character is a letter or an underscore
-    if not (identifier[0].isalpha() or identifier[0] == '_'):
-        return False
-
-    # Check the remaining characters
-    for char in identifier[1:]:
-        if not (char.isalnum() or char == '_'):
+    # Check if all characters are valid ASCII for C++ identifiers
+    for char in identifier:
+        if not ((char >= 'a' and char <= 'z') or 
+                (char >= 'A' and char <= 'Z') or 
+                (char >= '0' and char <= '9') or 
+                char == '_'):
             return False
+
+    # Check if the first character is a letter or an underscore (not a digit)
+    first_char = identifier[0]
+    if not ((first_char >= 'a' and first_char <= 'z') or 
+            (first_char >= 'A' and first_char <= 'Z') or 
+            first_char == '_'):
+        return False
 
     # Check if the identifier is not a C++ keyword or reserved word
     if keyword.iskeyword(identifier):
@@ -269,26 +320,40 @@ def is_cpp_id(identifier: str) -> bool:
     # If all checks pass, it's a valid C++ identifier
     return True
 
-def identify_case(input_str: str) -> IdentifierStringCase:
+class identify_case:
     """
     Identifies the case of a string based on IdentifierStringCase.
-
-    :param input_str: The input string to identify.
-
-    :return: IdentifierStringCase: The matching case type or NO_IDENTIFIER if invalid.
+    Can be called as a function or accessed as a class with enum attributes.
     """
-    if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', input_str):
-        return IdentifierStringCase.NO_IDENTIFIER
+    
+    # Expose enum values as class attributes for backward compatibility
+    NO_IDENTIFIER = IdentifierStringCase.NO_IDENTIFIER
+    SNAKE = IdentifierStringCase.SNAKE
+    CAMEL = IdentifierStringCase.CAMEL
+    CLASS = IdentifierStringCase.CLASS
+    CONSTANT = IdentifierStringCase.CONSTANT
+    MIXED = IdentifierStringCase.MIXED
+    
+    def __new__(cls, input_str: str) -> IdentifierStringCase:
+        """
+        Identifies the case of a string.
 
-    if re.match(r'^[A-Z]+(_[A-Z]+)*$', input_str):
-        return IdentifierStringCase.CONSTANT
-    if re.match(r'^[a-z]+(_[a-z]+)*$', input_str):
-        return IdentifierStringCase.SNAKE
-    if re.match(r'^[a-z]+([A-Z][a-z]*)*(?:_[A-Z]+)*$', input_str):
-        return IdentifierStringCase.CAMEL
-    if re.match(r'^[A-Z][a-z]+([A-Z][a-z]*)*(?:_[A-Z]+)*$', input_str):
-        return IdentifierStringCase.CLASS
-    return IdentifierStringCase.MIXED
+        :param input_str: The input string to identify.
+
+        :return: IdentifierStringCase: The matching case type or NO_IDENTIFIER if invalid.
+        """
+        if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', input_str):
+            return IdentifierStringCase.NO_IDENTIFIER
+
+        if re.match(r'^[A-Z]+(_[A-Z]+)*$', input_str):
+            return IdentifierStringCase.CONSTANT
+        if re.match(r'^[a-z]+(_[a-z]+)*$', input_str):
+            return IdentifierStringCase.SNAKE
+        if re.match(r'^[a-z]+([A-Z][a-z]*)*(?:_[A-Z]+)*$', input_str):
+            return IdentifierStringCase.CAMEL
+        if re.match(r'^[A-Z][a-z]+([A-Z][a-z]*)*(?:_[A-Z]+)*$', input_str):
+            return IdentifierStringCase.CLASS
+        return IdentifierStringCase.MIXED
 
 
 def snake_to_camel(snake_str: str):
@@ -329,7 +394,16 @@ def camel_to_snake(camel_str: str) -> str:
 
     :return: The string converted to snake_case.
     """
-    snake_str = re.sub(r'(?<!^)(?=[A-Z])', '_', camel_str).lower()
+    # Use a function-based approach to handle Unicode uppercase letters properly
+    result = []
+    for char in camel_str:
+        if char.isupper():
+            if result:
+                result.append('_')
+            result.append(char)
+        else:
+            result.append(char)
+    snake_str = ''.join(result).lower()
     return snake_str
 
 
@@ -383,30 +457,59 @@ def __pre_clean_id_string(raw_id):
 
 def split_text_into_chunks(text: str, max_chunk_size: int) -> list[str]:
     """
-    Split a text into smaller texts and without splitting words or sentences.
+    Split a text into smaller texts without splitting words or sentences.
+    Words longer than max_chunk_size are kept as-is.
     :param text: the text to split.
     :param max_chunk_size: the approximate size of the resulting chunks.
     :return: a list of smaller texts.
     """
-    # Split the text into sentences
-    sentences = re.split(r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s', text)
-
+    if is_empty_string(text):
+        return [""]
+    
+    # First, split by sentences (period, question mark, exclamation)
+    sentences = re.split(r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=[.?!])\s+', text)
+    
     # Initialize variables
-    current_chunk = ""
     chunks = []
+    current_chunk = ""
 
     for sentence in sentences:
+        sentence = sentence.strip()
+        if not sentence:
+            continue
+        
+        # If single word/sentence is longer than max_chunk_size, keep it as-is
+        if len(sentence) > max_chunk_size:
+            # If we have accumulated content, save it first
+            if current_chunk:
+                chunks.append(current_chunk.strip())
+                current_chunk = ""
+            # Split by words for this long piece
+            words = sentence.split()
+            for word in words:
+                if not word:
+                    continue
+                if len(current_chunk) + len(word) + 1 <= max_chunk_size:
+                    current_chunk += word + " "
+                else:
+                    if current_chunk:
+                        chunks.append(current_chunk.strip())
+                    current_chunk = word + " "
+            continue
+        
         # Check if adding the sentence to the current chunk exceeds the max_chunk_size
-        if len(current_chunk) + len(sentence) <= max_chunk_size:
+        if len(current_chunk) + len(sentence) + 1 <= max_chunk_size:
             current_chunk += sentence + " "
         else:
-            chunks.append(current_chunk)
+            if current_chunk:
+                chunks.append(current_chunk.strip())
             current_chunk = sentence + " "
 
     # Add the last chunk
-    chunks.append(current_chunk)
+    if current_chunk:
+        chunks.append(current_chunk.strip())
 
-    return chunks
+    return chunks if chunks else [""]
 
 
 def is_utf8_ascii(text: str) -> bool:
@@ -429,6 +532,8 @@ def is_roman_numeral(text: str) -> bool:
     :return: True, if the text is a Roman numeral, False otherwise.
     """
     text = text.upper().strip()
+    if is_empty_string(text):
+        return False
 
     # Regular expression pattern to match Roman numerals
     pattern = r'^M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$'

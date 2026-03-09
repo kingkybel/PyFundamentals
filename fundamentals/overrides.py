@@ -18,7 +18,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #
-# @date: 2024-07-13
+# @date: 2026-03-09
 # @author: Dieter J Kybelksties
 
 import inspect
@@ -64,9 +64,28 @@ class OverrideChecker:
                 sub_param = method_sig.parameters[param_name]
                 # Check parameter kind compatibility
                 if param.kind != sub_param.kind:
-                    if not (param.kind in (param.POSITIONAL_OR_KEYWORD, param.KEYWORD_ONLY) and
-                            sub_param.kind in (param.POSITIONAL_OR_KEYWORD, param.KEYWORD_ONLY)):
+                    # If interface has KEYWORD_ONLY, implementation must also have KEYWORD_ONLY
+                    if param.kind == param.KEYWORD_ONLY:
+                        raise AssertionError(f"Parameter {param_name} must be keyword-only in method {name}")
+                    # If interface has POSITIONAL_ONLY, implementation must also have POSITIONAL_ONLY
+                    if param.kind == param.POSITIONAL_ONLY:
+                        raise AssertionError(f"Parameter {param_name} must be positional-only in method {name}")
+                    # Allow VAR_POSITIONAL (*args) to be compatible
+                    if param.kind == param.VAR_POSITIONAL:
+                        if sub_param.kind != param.VAR_POSITIONAL:
+                            raise AssertionError(f"Parameter {param_name} must be *args in method {name}")
+                    # Allow VAR_KEYWORD (**kwargs) to be compatible
+                    if param.kind == param.VAR_KEYWORD:
+                        if sub_param.kind != param.VAR_KEYWORD:
+                            raise AssertionError(f"Parameter {param_name} must be **kwargs in method {name}")
+                    # POSITIONAL_OR_KEYWORD to KEYWORD_ONLY is not allowed ( stricter to looser)
+                    if param.kind == param.POSITIONAL_OR_KEYWORD and sub_param.kind == param.KEYWORD_ONLY:
                         raise AssertionError(f"Parameter {param_name} kind mismatch in method {name}")
+
+        # Check for extra parameters in method_sig that are not in interface_sig
+        for param_name in method_sig.parameters:
+            if param_name not in interface_sig.parameters:
+                raise AssertionError(f"Method {name} extra parameter {param_name}")
 
     def __get__(self, instance, owner):
         if instance is None:
