@@ -119,6 +119,34 @@ class BashTests(unittest.TestCase):
         self.assertTrue(is_tool_installed("python") or is_tool_installed("python3"))
         self.assertFalse(is_tool_installed("nonexistent_tool_12345"))
 
+    def test_is_tool_installed_version_checking(self):
+        """Test version checking functionality with mocked subprocess calls."""
+        with patch('fundamentals.bash.which') as mock_which:
+            with patch('fundamentals.bash._get_tool_version') as mock_get_version:
+                with patch('fundamentals.bash._compare_versions') as mock_compare:
+                    
+                    # Test tool not found
+                    mock_which.return_value = None
+                    self.assertFalse(is_tool_installed("test_tool", "1.0.0"))
+                    
+                    # Test tool found but no version specified
+                    mock_which.return_value = "/usr/bin/test_tool"
+                    mock_get_version.return_value = None
+                    self.assertTrue(is_tool_installed("test_tool"))
+                    
+                    # Test version checking with exact match
+                    mock_get_version.return_value = "1.0.0"
+                    mock_compare.return_value = True
+                    self.assertTrue(is_tool_installed("test_tool", "1.0.0", exact_version=True))
+                    
+                    # Test version checking with minimum version
+                    mock_compare.return_value = True
+                    self.assertTrue(is_tool_installed("test_tool", "1.0.0", exact_version=False))
+                    
+                    # Test version checking failure
+                    mock_compare.return_value = False
+                    self.assertFalse(is_tool_installed("test_tool", "1.0.0", exact_version=False))
+
     def test_assert_tools_installed(self):
         with patch('fundamentals.bash.is_tool_installed', return_value=True):
             # Should not raise
