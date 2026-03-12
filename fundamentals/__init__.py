@@ -7,4 +7,4 @@ from .__init__ import *
 from .string_utils import *
 from .thread_with_return import *
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"

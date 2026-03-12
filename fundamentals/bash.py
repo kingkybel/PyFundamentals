@@ -24,7 +24,9 @@
 from __future__ import annotations
 
 import os
+import re
 import socket
+import subprocess
 import sys
 import urllib.request
 from getpass import getuser
@@ -109,27 +111,138 @@ def get_external_ip() -> str:
     return urllib.request.urlopen("https://ident.me").read().decode(str(Encodings.UTF8))
 
 
-def is_tool_installed(name: str) -> bool:
+def is_tool_installed(name: str, version: str=None, exact_version: bool =False) -> bool:
     """
     Check if the tool is installed.
     :param name: name of the tool
+    :param version: optional version to check
+    :param exact_version: if true, then the exact version is checked, otherwise later versions are OK
     :return: True, if tool is installed, False otherwise
     """
-    return which(name) is not None
+    # First check if tool exists
+    if which(name) is None:
+        return False
+    
+    # If no version specified, just return True (tool exists)
+    if version is None:
+        return True
+    
+    # Try to get the installed version
+    installed_version = _get_tool_version(name)
+    if installed_version is None:
+        return False
+    
+    # Compare versions
+    return _compare_versions(installed_version, version, exact_version)
+
+
+def _get_tool_version(name: str) -> str | None:
+    """
+    Get the version of a tool by executing it with common version flags.
+    :param name: name of the tool
+    :return: version string if found, None otherwise
+    """
+    # Common version flags to try
+    version_flags = ['--version', '-v', '-V', 'version']
+    
+    for flag in version_flags:
+        try:
+            # Execute the tool with version flag
+            result = subprocess.run([name, flag], 
+                                  capture_output=True, 
+                                  text=True, 
+                                  timeout=5)
+            
+            if result.returncode == 0:
+                output = result.stdout.strip() or result.stderr.strip()
+                if output:
+                    # Extract version using regex patterns
+                    version = _extract_version_from_output(output)
+                    if version:
+                        return version
+        except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError):
+            continue
+    
+    return None
+
+
+def _extract_version_from_output(output: str) -> str | None:
+    """
+    Extract version number from command output using common patterns.
+    :param output: command output string
+    :return: version string if found, None otherwise
+    """
+    # Common version patterns
+    patterns = [
+        r'version\s*[:\s]*([0-9]+\.[0-9]+(?:\.[0-9]+)*)',  # version 1.2.3
+        r'([0-9]+\.[0-9]+(?:\.[0-9]+)*)',                   # standalone version
+        r'v([0-9]+\.[0-9]+(?:\.[0-9]+)*)',                  # v1.2.3
+        r'Version\s*[:\s]*([0-9]+\.[0-9]+(?:\.[0-9]+)*)',  # Version 1.2.3
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, output, re.IGNORECASE)
+        if match:
+            return match.group(1)
+    
+    return None
+
+
+def _compare_versions(installed: str, required: str, exact: bool) -> bool:
+    """
+    Compare installed version with required version.
+    :param installed: installed version string
+    :param required: required version string
+    :param exact: if True, check for exact match, otherwise check if installed >= required
+    :return: True if version requirement is satisfied
+    """
+    try:
+        # Split versions into components
+        installed_parts = [int(x) for x in installed.split('.')]
+        required_parts = [int(x) for x in required.split('.')]
+        
+        # Pad shorter version with zeros
+        max_len = max(len(installed_parts), len(required_parts))
+        installed_parts.extend([0] * (max_len - len(installed_parts)))
+        required_parts.extend([0] * (max_len - len(required_parts)))
+        
+        if exact:
+            # Exact version match
+            return installed_parts == required_parts
+        else:
+            # Installed version should be >= required version
+            return installed_parts >= required_parts
+            
+    except (ValueError, AttributeError):
+        # If version parsing fails, assume version check cannot be performed
+        return False
 
 
 def assert_tools_installed(tools: (str | list[str])):
     """
     Assert that the whole list of tools is installed
-    :param tools: all the tools to check
+    :param tools: all the tools to check (can be strings or tuples of (tool_name, version, exact_version))
     :raises SystemExit:
     """
     if isinstance(tools, str):
         tools = [tools]
+    
     missing_tools = []
     for tool in tools:
-        if not is_tool_installed(tool):
-            missing_tools.append(tool)
+        if isinstance(tool, tuple):
+            # Tool with version specification: (name, version, exact_version)
+            name, version, exact_version = tool
+            if not is_tool_installed(name, version, exact_version):
+                if version:
+                    version_str = f" (version {version}" + (" exact" if exact_version else " or later") + ")"
+                else:
+                    version_str = ""
+                missing_tools.append(f"{name}{version_str}")
+        else:
+            # Simple tool name
+            if not is_tool_installed(tool):
+                missing_tools.append(tool)
+    
     if len(missing_tools) > 0:
         print(f"Please install the following tools {missing_tools} ",
               "to run this script (or add location to PATH variable)")
