@@ -7,7 +7,7 @@ name = "kingkybel-pyfundamentals"
 
 [project]
 name = "kingkybel-pyfundamentals"
-version = "0.4.0"
+version = "0.4.1"
 description = "A collection of fundamental Python utilities for common tasks"
 readme = "README.md"
 license = "GPL-2.0-only"
