@@ -342,7 +342,9 @@ class identify_case:
 
         :return: IdentifierStringCase: The matching case type or NO_IDENTIFIER if invalid.
         """
-        if not re.match(r'^[a-zA-Z_]\w*$', input_str):
+        # Restrict to ASCII identifier characters only.
+        # Using \w here would allow many Unicode letters, which should be treated as invalid.
+        if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', input_str):
             return IdentifierStringCase.NO_IDENTIFIER
 
         if re.match(r'^[A-Z]+(_[A-Z]+)*$', input_str):
