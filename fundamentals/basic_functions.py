@@ -26,8 +26,8 @@ from __future__ import annotations
 from datetime import datetime
 
 
-def is_empty_string(string: str = None):
-    return string is None or string == ""
+def is_empty_string(string = None):
+    return string is None or str(string) == ""
 
 
 def now_string() -> str:
