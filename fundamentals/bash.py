@@ -74,7 +74,10 @@ def number_of_cores() -> int:
     Get the number of available cores
     :return: the number of cores
     """
-    return int(cpu_count())
+    try:
+        return len(os.sched_getaffinity(0))  # type: ignore[attr-defined]
+    except Exception:
+        return int(os.cpu_count() or 1)
 
 
 def hostname() -> str:
