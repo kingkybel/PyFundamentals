@@ -27,7 +27,7 @@ from unittest.mock import patch
 
 from fundamentals.string_utils import FALSE_STRINGS, TRUE_STRINGS, input_value, squeeze_chars, remove_control_chars, \
     matches_any, replace_all, normalise_sentence, get_random_string, \
-    contains_at_least_n_of, is_cpp_id, identify_case, snake_to_camel, camel_to_snake, make_cpp_id, \
+    contains_at_least_n_of, is_cpp_id, IdentifyCase, snake_to_camel, camel_to_snake, make_cpp_id, \
     split_text_into_chunks, is_utf8_ascii, is_roman_numeral, roman_to_integer
 
 
@@ -84,6 +84,13 @@ class ExtendedStringUtilsTests(unittest.TestCase):
         # Test with mixed content
         self.assertEqual(remove_control_chars("hello\nworld"), "hello world")
 
+    def test_remove_control_chars_with_iterable_input(self):
+        values = ["hello\nworld", "a\tb\rc"]
+        self.assertEqual(remove_control_chars(values), ["hello world", "a b c"])
+
+        # Empty iterable-like input should return empty string based on current API contract
+        self.assertEqual(remove_control_chars([]), "")
+
     def test_matches_any_edge_cases(self):
         # Test with None patterns
         self.assertTrue(matches_any("test", None))
@@ -96,12 +103,25 @@ class ExtendedStringUtilsTests(unittest.TestCase):
         self.assertTrue(matches_any("test", ["", "test"]))
         self.assertFalse(matches_any("test", ["abc", "def"]))
 
+    def test_matches_any_with_iterable_inputs(self):
+        self.assertTrue(matches_any(["abc", "def"], [r"x+", r"d.*"]))
+        self.assertFalse(matches_any(["abc", "def"], [r"x+", r"z.*"]))
+        self.assertFalse(matches_any([], [r".*"]))
+
     def test_replace_all_edge_cases(self):
         # Test with empty replacements dict
         self.assertEqual(replace_all("test", {}), "test")
 
         # Test with empty string
         self.assertEqual(replace_all("", {"a": "b"}), "")
+
+    def test_replace_all_with_iterable_input(self):
+        values = ["hello world", "abc"]
+        replacements = {" ": "_", "a": "A", "c": "C"}
+        self.assertEqual(replace_all(values, replacements), ["hello_world", "AbC"])
+
+        # Preserve existing behavior for falsy content
+        self.assertEqual(replace_all([], {"x": "y"}), [])
 
     def test_normalise_sentence_edge_cases(self):
         # Test with empty string
@@ -169,20 +189,20 @@ class ExtendedStringUtilsTests(unittest.TestCase):
 
     def test_identify_case_edge_cases(self):
         # Test with empty string
-        self.assertEqual(identify_case(""), identify_case.NO_IDENTIFIER)
+        self.assertEqual(IdentifyCase(""), IdentifyCase.NO_IDENTIFIER)
         
         # Test with single character
-        self.assertEqual(identify_case("a"), identify_case.SNAKE)
-        self.assertEqual(identify_case("A"), identify_case.CONSTANT)
-        self.assertEqual(identify_case("_"), identify_case.MIXED)
+        self.assertEqual(IdentifyCase("a"), IdentifyCase.SNAKE)
+        self.assertEqual(IdentifyCase("A"), IdentifyCase.CONSTANT)
+        self.assertEqual(IdentifyCase("_"), IdentifyCase.MIXED)
         
         # Test with numbers
-        self.assertEqual(identify_case("test123"), identify_case.MIXED)
-        self.assertEqual(identify_case("Test123"), identify_case.MIXED)
+        self.assertEqual(IdentifyCase("test123"), IdentifyCase.MIXED)
+        self.assertEqual(IdentifyCase("Test123"), IdentifyCase.MIXED)
         
         # Test with invalid characters
-        self.assertEqual(identify_case("test-var"), identify_case.NO_IDENTIFIER)
-        self.assertEqual(identify_case("test var"), identify_case.NO_IDENTIFIER)
+        self.assertEqual(IdentifyCase("test-var"), IdentifyCase.NO_IDENTIFIER)
+        self.assertEqual(IdentifyCase("test var"), IdentifyCase.NO_IDENTIFIER)
 
     def test_snake_to_camel_edge_cases(self):
         # Test with empty string
@@ -216,26 +236,26 @@ class ExtendedStringUtilsTests(unittest.TestCase):
 
     def test_make_cpp_id_edge_cases(self):
         # Test with empty string
-        self.assertEqual(make_cpp_id("", identify_case.SNAKE), "_")
+        self.assertEqual(make_cpp_id("", IdentifyCase.SNAKE), "_")
         
         # Test with special characters
-        self.assertEqual(make_cpp_id("test-var", identify_case.SNAKE), "test_var")
-        self.assertEqual(make_cpp_id("test.var", identify_case.SNAKE), "test_var")
+        self.assertEqual(make_cpp_id("test-var", IdentifyCase.SNAKE), "test_var")
+        self.assertEqual(make_cpp_id("test.var", IdentifyCase.SNAKE), "test_var")
         
         # Test with numbers at start
-        self.assertEqual(make_cpp_id("123test", identify_case.SNAKE), "_123_test")
+        self.assertEqual(make_cpp_id("123test", IdentifyCase.SNAKE), "_123_test")
         
         # Test with mixed case to snake
-        self.assertEqual(make_cpp_id("CamelCase", identify_case.SNAKE), "camel_case")
+        self.assertEqual(make_cpp_id("CamelCase", IdentifyCase.SNAKE), "camel_case")
         
         # Test with snake to camel
-        self.assertEqual(make_cpp_id("snake_case", identify_case.CAMEL), "snakeCase")
+        self.assertEqual(make_cpp_id("snake_case", IdentifyCase.CAMEL), "snakeCase")
         
         # Test with snake to class
-        self.assertEqual(make_cpp_id("snake_case", identify_case.CLASS), "SnakeCase")
+        self.assertEqual(make_cpp_id("snake_case", IdentifyCase.CLASS), "SnakeCase")
         
         # Test with snake to constant
-        self.assertEqual(make_cpp_id("snake_case", identify_case.CONSTANT), "SNAKE_CASE")
+        self.assertEqual(make_cpp_id("snake_case", IdentifyCase.CONSTANT), "SNAKE_CASE")
 
     def test_split_text_into_chunks_edge_cases(self):
         # Test with empty string
@@ -364,8 +384,8 @@ class ExtendedStringUtilsTests(unittest.TestCase):
 
     def test_identify_case_with_unicode(self):
         # Test with Unicode characters
-        self.assertEqual(identify_case("αβγ"), identify_case.NO_IDENTIFIER)
-        self.assertEqual(identify_case("test_αβγ"), identify_case.NO_IDENTIFIER)
+        self.assertEqual(IdentifyCase("αβγ"), IdentifyCase.NO_IDENTIFIER)
+        self.assertEqual(IdentifyCase("test_αβγ"), IdentifyCase.NO_IDENTIFIER)
 
     def test_snake_to_camel_with_unicode(self):
         # Test with Unicode in snake_case
@@ -379,16 +399,16 @@ class ExtendedStringUtilsTests(unittest.TestCase):
     def test_make_cpp_id_with_special_cases(self):
         # Test with very long identifiers
         long_id = "a" * 100
-        result = make_cpp_id(long_id, identify_case.SNAKE)
+        result = make_cpp_id(long_id, IdentifyCase.SNAKE)
         self.assertEqual(result, long_id)
         
         # Test with mixed special characters
         mixed = "test-@#$%^&*()_+="
-        result = make_cpp_id(mixed, identify_case.SNAKE)
+        result = make_cpp_id(mixed, IdentifyCase.SNAKE)
         self.assertEqual("test", result)
 
         mixed = "te-@#$%^&*()_+=st"
-        result = make_cpp_id(mixed, identify_case.SNAKE)
+        result = make_cpp_id(mixed, IdentifyCase.SNAKE)
         self.assertEqual("te_st", result)
 
     def test_split_text_into_chunks_with_unicode(self):

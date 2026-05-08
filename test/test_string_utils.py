@@ -26,7 +26,7 @@ import unittest
 from unittest.mock import patch
 
 from fundamentals.string_utils import squeeze_chars, matches_any, normalise_sentence, roman_to_integer, is_roman_numeral, \
-    identify_case, IdentifierStringCase, make_cpp_id, remove_control_chars, replace_all, get_random_string, is_cpp_id, \
+    IdentifyCase, IdentifierStringCase, make_cpp_id, remove_control_chars, replace_all, get_random_string, is_cpp_id, \
     snake_to_camel, camel_to_snake, split_text_into_chunks, is_utf8_ascii, StringUtilError, input_value, contains_at_least_n_of
 
 
@@ -122,11 +122,11 @@ class BasicFunctionsTests(unittest.TestCase):
         self.assertEqual(roman_to_integer("abc"), -1)
 
     def test_identify_case(self):
-        self.assertEqual(identify_case("snake_case"), IdentifierStringCase.SNAKE)
-        self.assertEqual(identify_case("camelCase"), IdentifierStringCase.CAMEL)
-        self.assertEqual(identify_case("CamelCase"), IdentifierStringCase.CLASS)
-        self.assertEqual(identify_case("mixed_Case"), IdentifierStringCase.MIXED)
-        self.assertEqual(identify_case("Mixed_Case"), IdentifierStringCase.MIXED)
+        self.assertEqual(IdentifyCase("snake_case"), IdentifierStringCase.SNAKE)
+        self.assertEqual(IdentifyCase("camelCase"), IdentifierStringCase.CAMEL)
+        self.assertEqual(IdentifyCase("CamelCase"), IdentifierStringCase.CLASS)
+        self.assertEqual(IdentifyCase("mixed_Case"), IdentifierStringCase.MIXED)
+        self.assertEqual(IdentifyCase("Mixed_Case"), IdentifierStringCase.MIXED)
 
     def test_constant_conversion(self):
         self.assertEqual(make_cpp_id("this_is_constant_case", IdentifierStringCase.CONSTANT),

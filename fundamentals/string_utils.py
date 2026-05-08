@@ -2,7 +2,7 @@
 # File Name:    fundamentals/string_utils.py
 # Description:  utilities to perform string manipulations
 #
-# Copyright (C) 2024 Dieter J Kybelksties <github@kybelksties.com>
+# Copyright (C) 2026 Dieter J Kybelksties <github@kybelksties.com>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -28,7 +28,9 @@ import keyword
 import random
 import re
 import string
+from collections.abc import Iterable
 from enum import auto
+from typing import TypeAlias
 
 from fundamentals.basic_functions import is_empty_string
 from fundamentals.exceptions import StringUtilError
@@ -41,6 +43,13 @@ class Encodings:
     UTF32 = "utf-32"
     ASCII = "ascii"
 
+Strings: TypeAlias = str | Iterable[str] | None
+def force_strings(strings: Strings) -> Iterable[str]:
+    if not strings:
+        return []
+    if isinstance(strings, str):
+        return [strings]
+    return strings
 
 class IdentifierStringCase(ExtendedFlag):
     NO_IDENTIFIER = auto()  # string contains any character not valid in identifiers
@@ -171,20 +180,31 @@ def squeeze_chars(source: str, squeeze_set: str, replace_with: str = ' ') -> str
     return source
 
 
-def remove_control_chars(text: str) -> str:
+def remove_control_chars(text: Strings) -> Strings:
     """
     Remove ASCII control characters from a string.
     :param text: the string containing control characters.
-    :return: the same string without control characters.
+    :return: the same strings without control characters.
     """
-    text = text.encode("ascii", "ignore")
-    text = text.decode()
-    control_chars = ''.join(chr(c) for c in itertools.chain(range(0x00, 0x20), range(0x7f, 0xa0)))
-    control_char_re = re.compile(f'[{re.escape(control_chars)}]')
-    return control_char_re.sub(' ', text)
+    if not text:
+        return ""
+    if isinstance(text, str):
+        text = text.encode("ascii", "ignore")
+        text = text.decode()
+        control_chars = ''.join(chr(c) for c in itertools.chain(range(0x00, 0x20), range(0x7f, 0xa0)))
+        control_char_re = re.compile(f'[{re.escape(control_chars)}]')
+        return control_char_re.sub(' ', text)
+    reval = []
+    for t in text:
+        t = t.encode("ascii", "ignore")
+        t = t.decode()
+        control_chars = ''.join(chr(c) for c in itertools.chain(range(0x00, 0x20), range(0x7f, 0xa0)))
+        control_char_re = re.compile(f'[{re.escape(control_chars)}]')
+        reval.append(control_char_re.sub(' ', t))
+    return reval
 
 
-def matches_any(search_string: str, patterns: (str | list[str]) = None, flags: int = 0) -> bool:
+def matches_any(search_string: Strings, patterns: Strings = None, flags: int = 0) -> bool:
     """
     Check whether the search-string matches any of the given patterns.
     :param search_string: the string to test.
@@ -192,30 +212,43 @@ def matches_any(search_string: str, patterns: (str | list[str]) = None, flags: i
     :param flags: regex flags (e.g., re.IGNORECASE).
     :return: True if any pattern matches, False otherwise.
     """
-    if patterns is None:
+    if is_empty_string(patterns):
         return True
-    if isinstance(patterns, str):
-        patterns = [patterns]
-    if any(re.match(pattern=pattern, string=search_string, flags=flags) for pattern in patterns):
-        return True
+    if is_empty_string(search_string):
+        return False
+    search_string =force_strings(search_string)
+    patterns = force_strings(patterns)
+    for s in search_string:
+        if any(re.match(pattern=pattern, string=s, flags=flags) for pattern in patterns):
+            return True
     return False
 
 
-def replace_all(content: str, replacements: dict[str, str]) -> str:
+def replace_all(content: Strings, replacements: dict[str, str]) -> Strings:
     """
     Replace all occurrences of the given replacements.
     :param content: the original string.
     :param replacements: a mapping from original strings to replacements.
     :return: the modified string.
     """
-    for tag in replacements.keys():
-        content = content.replace(tag, replacements[tag])
-    return content
+    if is_empty_string(content):
+        return content
+    if isinstance(content, str):
+        for tag in replacements.keys():
+            content = content.replace(tag, replacements[tag])
+        return content
+    reval = []
+    for c in content:
+        for tag in replacements.keys():
+            c = c.replace(tag, replacements[tag])
+        reval.append(c)
+    return reval
+
 
 
 def normalise_sentence(sentence: str,
                        squeeze_set: str = "\n\t\r *#\\*@><|^&~",
-                       expected_non_al_nums: (str | list[str]) = None) -> str:
+                       expected_non_al_nums: Strings = None) -> str:
     """
     Remove most common non-sentence characters, repeated whitespace etc. from a string.
     :param sentence: the original string containing a sentence.
@@ -263,7 +296,7 @@ def get_random_string(length: int, letters: str = None) -> str:
     return ''.join(random.choice(letters) for i in range(length))
 
 
-def contains_at_least_n_of(text: str, specified_words: (str | list[str]) = None, minimum: int = 10) -> bool:
+def contains_at_least_n_of(text: str, specified_words: Strings = None, minimum: int = 10) -> bool:
     """
     Check whether a text contains at least `minimum` of the specified words.
     Supports both literal words and regex patterns in specified_words.
@@ -300,16 +333,16 @@ def is_cpp_id(identifier: str) -> bool:
 
     # Check if all characters are valid ASCII for C++ identifiers
     for char in identifier:
-        if not ((char >= 'a' and char <= 'z') or 
-                (char >= 'A' and char <= 'Z') or 
-                (char >= '0' and char <= '9') or 
+        if not (('a' <= char <= 'z') or
+                ('A' <= char <= 'Z') or
+                ('0' <= char <= '9') or
                 char == '_'):
             return False
 
     # Check if the first character is a letter or an underscore (not a digit)
     first_char = identifier[0]
-    if not ((first_char >= 'a' and first_char <= 'z') or 
-            (first_char >= 'A' and first_char <= 'Z') or 
+    if not (('a' <= first_char <= 'z') or
+            ('A' <= first_char <= 'Z') or
             first_char == '_'):
         return False
 
@@ -320,7 +353,7 @@ def is_cpp_id(identifier: str) -> bool:
     # If all checks pass, it's a valid C++ identifier
     return True
 
-class identify_case:
+class IdentifyCase:
     """
     Identifies the case of a string based on IdentifierStringCase.
     Can be called as a function or accessed as a class with enum attributes.
@@ -422,7 +455,7 @@ def make_cpp_id(raw_id: str, case_flag: IdentifierStringCase) -> str:
         return valid_id
 
     # Identify the current case of the input
-    current_case = identify_case(valid_id)
+    current_case = IdentifyCase(valid_id)
 
     # Convert based on target case
     if case_flag == IdentifierStringCase.SNAKE:
